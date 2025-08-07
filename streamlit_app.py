@@ -58,7 +58,8 @@ st.subheader("🧠 Prediction")
 st.success(f"Predicted Fault Type: {int(prediction[0])}")
 
 st.subheader("📈 Prediction Probabilities")
-proba_df = pd.DataFrame(prediction_proba, co
+proba_df = pd.DataFrame(prediction_proba, columns=[f'Class {c}' for c in model.classes_])
+
 input_data = {}
 for col in X.columns:
     min_val = float(X[col].min())
