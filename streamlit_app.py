@@ -1,5 +1,5 @@
 import streamlit as st
 
-st.title('🎈 App Name')
+st.title('Earthquake detector')
 
-st.write('Hello world!')
+st.write('The goal is to detect possible earthquake risks before something goes wrong')
