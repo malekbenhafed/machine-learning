@@ -3,26 +3,62 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-# Title
-st.title("🌍 Earthquake Risk Detector")
+st.title('🌍 Earthquake Risk Detector')
+st.write("This app uses machine learning to detect possible steel plate faults which might indicate earthquake-related risks.")
 
-st.write("This app predicts possible fault types in steel plates, which may help anticipate structural risks before an earthquake.")
-
-# Load dataset
+# Load data
 df = pd.read_csv('https://raw.githubusercontent.com/malekbenhafed/final-project/master/Steel_Plates_Faults.csv')
 
-# Show raw data
-with st.expander("Raw Data"):
-    st.dataframe(df)
+# Show columns to identify target
+st.write("### 📊 Dataset Columns:")
+st.write(df.columns)
 
-# Prepare features (X) and target (y)
-X = df.drop('Class', axis=1)
-y = df['Class']
+# Identify target column
+target_col = 'Faults'  # Use this if you know the correct target column (change if needed)
 
-# Sidebar for user input
-st.sidebar.header("Input Features")
+# Display raw data
+with st.expander('🔍 View raw dataset'):
+    st.write(df)
 
-# Auto-generate sliders for numeric input
+# Prepare data
+X = df.drop(target_col, axis=1)
+y = df[target_col]
+
+# Sidebar inputs for features
+st.sidebar.header('📥 Input Features')
+
+# Take one row from X to get the feature names and example ranges
+sample = X.iloc[0]
+
+# Create input sliders dynamically
+input_data = {}
+for col in X.columns:
+    min_val = float(X[col].min())
+    max_val = float(X[col].max())
+    default_val = float(X[col].mean())
+    input_data[col] = st.sidebar.slider(f"{col}", min_val, max_val, default_val)
+
+# Convert inputs to DataFrame
+input_df = pd.DataFrame([input_data])
+
+# Display input data
+with st.expander("📌 Input data"):
+    st.write(input_df)
+
+# Train model
+model = RandomForestClassifier()
+model.fit(X, y)
+
+# Predict
+prediction = model.predict(input_df)
+prediction_proba = model.predict_proba(input_df)
+
+# Show results
+st.subheader("🧠 Prediction")
+st.success(f"Predicted Fault Type: {int(prediction[0])}")
+
+st.subheader("📈 Prediction Probabilities")
+proba_df = pd.DataFrame(prediction_proba, co
 input_data = {}
 for col in X.columns:
     min_val = float(X[col].min())
