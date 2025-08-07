@@ -12,22 +12,25 @@ data_url = (
 )
 df = pd.read_csv(data_url)
 
-# 2. Show dataset columns (for debugging)
-st.subheader("Dataset Columns (use this list to identify target column)")
+# 2. 🔧 Clean up column names (IMPORTANT!)
+df.columns = df.columns.str.strip()
+
+# 3. Show dataset columns (for debugging)
+st.subheader("Dataset Columns (cleaned)")
 st.write(df.columns.tolist())
 
-# 3. Specify correct target column name below
-target_col = "fault 0"  # ← REPLACE this with the exact name from the columns list
+# 4. Set target column
+target_col = "Other_Faults"  # Make sure this matches cleaned name!
 
-# 4. Display sample data
+# 5. Display sample data
 with st.expander("View raw dataset"):
     st.dataframe(df.head())
 
-# 5. Prepare features and target
+# 6. Split data
 X = df.drop(target_col, axis=1)
 y = df[target_col]
 
-# 6. Sidebar: input sliders for each feature
+# 7. Input sliders
 st.sidebar.header("Input Features")
 input_data = {
     col: st.sidebar.slider(
@@ -38,22 +41,21 @@ input_data = {
     )
     for col in X.columns
 }
-
-# Convert inputs to DataFrame
 input_df = pd.DataFrame([input_data])
 
 with st.expander("Your Input"):
     st.write(input_df)
 
-# 7. Train Random Forest model
+# 8. Train model
 model = RandomForestClassifier()
 model.fit(X, y)
 
-# 8. Predict and show results
+# 9. Predict
 prediction = model.predict(input_df)
 prediction_proba = model.predict_proba(input_df)
 
-st.subheader("Predicted Fault Type")
+# 10. Display result
+st.subheader("Predicted Fault")
 st.write(f"**{prediction[0]}**")
 
 proba_df = pd.DataFrame(
@@ -63,3 +65,4 @@ proba_df = pd.DataFrame(
 
 st.subheader("Prediction Probabilities")
 st.dataframe(proba_df.style.highlight_max(axis=1))
+
