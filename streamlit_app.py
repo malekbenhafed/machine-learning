@@ -7,109 +7,93 @@ st.title('🌋 Earthquake Risk Detector')
 st.info('This app predicts steel plate faults to assess earthquake risks!')
 
 # Load data
-@st.cache_data
-def load_data():
-    return pd.read_csv('https://raw.githubusercontent.com/malekbenhafed/final-project/master/Steel_Plates_Faults.csv')
-
-df = load_data()
-
-# Debug: Show all columns
-st.write("All columns in dataset:", list(df.columns))
-
-# Define expected fault columns
-expected_faults = ['Pastry', 'Z_Scratch', 'K_Scratch', 'Stains', 
-                  'Dirtiness', 'Bumps', 'Other_Faults']
-
-# Find which fault columns actually exist
-existing_faults = [col for col in expected_faults if col in df.columns]
-st.write("Existing fault columns:", existing_faults)
+df = pd.read_csv('https://raw.githubusercontent.com/malekbenhafed/final-project/master/Steel_Plates_Faults.csv')
 
 with st.expander('Data'):
-    st.write('**Raw data (first 100 rows)**')
-    st.dataframe(df.head(100))
-    
-    st.write('**X (Features)**')
-    X_raw = df.drop(existing_faults, axis=1, errors='ignore')
-    st.dataframe(X_raw)
-    
-    st.write('**y (Fault Types)**')
-    if existing_faults:
-        y_raw = df[existing_faults]
-        st.dataframe(y_raw)
-    else:
-        st.error("No fault columns found in dataset!")
+    st.write('**Raw data**')
+    df
 
-# Only proceed if we found fault columns
-if existing_faults:
-    # Use first existing fault as target
-    target = existing_faults[0]
-    
-    with st.expander('Data visualization'):
-        st.scatter_chart(data=df, x='X_Minimum', y='Y_Minimum', color=target)
+    st.write('**X**')
+    fault_columns = ['Pastry', 'Z_Scratch', 'K_Scratch', 'Stains', 'Dirtiness', 'Bumps', 'Other_Faults']
+    X_raw = df.drop(fault_columns, axis=1)
+    X_raw
 
-    # Input features
-    with st.sidebar:
-        st.header('Steel Plate Parameters')
-        
-        # Check if steel type columns exist
-        if 'TypeOfSteel_A300' in df.columns and 'TypeOfSteel_A400' in df.columns:
-            steel_type = st.radio('Steel Type', ['A300', 'A400'])
-        else:
-            st.warning("Steel type columns not found")
-            steel_type = 'A300'
-        
-        # Create sliders only for columns that exist
-        num_features = {}
-        for col in ['Steel_Plate_Thickness', 'Sum_of_Luminosity', 'Edges_Index']:
-            if col in df.columns:
-                num_features[col] = st.slider(
-                    col,
-                    float(df[col].min()),
-                    float(df[col].max()),
-                    float(df[col].mean())
-                )
-        
-        # Create input DataFrame
-        input_data = {}
-        if 'TypeOfSteel_A300' in df.columns:
-            input_data['TypeOfSteel_A300'] = [1 if steel_type == 'A300' else 0]
-        if 'TypeOfSteel_A400' in df.columns:
-            input_data['TypeOfSteel_A400'] = [1 if steel_type == 'A400' else 0]
-        
-        for col, val in num_features.items():
-            input_data[col] = [val]
-            
-        input_df = pd.DataFrame(input_data)
-        
-    # Prepare data for model
-    try:
-        X = df.drop(existing_faults, axis=1, errors='ignore')
-        y = df[target]
-        
-        # Model training
-        clf = RandomForestClassifier()
-        clf.fit(X, y)
-        
-        # Prediction
-        prediction = clf.predict(input_df)
-        prediction_proba = clf.predict_proba(input_df)
-        
-        # Display results
-        st.subheader('Earthquake Risk Assessment')
-        st.write(f'Probability of {target}:')
-        
-        df_prediction_proba = pd.DataFrame(
-            prediction_proba, 
-            columns=[f'No {target}', f'{target} Detected']
-        )
-        st.dataframe(df_prediction_proba.style.highlight_max(axis=1))
-        
-        if prediction[0] == 1:
-            st.error('🚨 High earthquake risk detected!')
-        else:
-            st.success('✅ No significant risk detected')
-            
-    except Exception as e:
-        st.error(f"Model error: {str(e)}")
+    st.write('**y**')
+    y_raw = df[fault_columns]
+    y_raw
+
+with st.expander('Data visualization'):
+    st.scatter_chart(data=df, x='X_Minimum', y='Y_Minimum', color='Other_Faults')
+
+# Input features - MUST INCLUDE ALL COLUMNS USED IN TRAINING
+with st.sidebar:
+    st.header('Input features')
+    
+    # Steel type
+    steel_type = st.selectbox('Steel Type', ['A300', 'A400'])
+    
+    # Critical features that were in the error message
+    edges_x_index = st.slider('Edges_X_Index', 
+                            float(df['Edges_X_Index'].min()),
+                            float(df['Edges_X_Index'].max()),
+                            float(df['Edges_X_Index'].mean()))
+    
+    edges_y_index = st.slider('Edges_Y_Index',
+                            float(df['Edges_Y_Index'].min()),
+                            float(df['Edges_Y_Index'].max()),
+                            float(df['Edges_Y_Index'].mean()))
+    
+    empty_index = st.slider('Empty_Index',
+                          float(df['Empty_Index'].min()),
+                          float(df['Empty_Index'].max()),
+                          float(df['Empty_Index'].mean()))
+    
+    log_areas = st.slider('LogOfAreas',
+                        float(df['LogOfAreas'].min()),
+                        float(df['LogOfAreas'].max()),
+                        float(df['LogOfAreas'].mean()))
+    
+    # Add other required features here...
+    
+    # Create input DataFrame with ALL features used in training
+    input_data = {
+        'TypeOfSteel_A300': [1 if steel_type == 'A300' else 0],
+        'TypeOfSteel_A400': [1 if steel_type == 'A400' else 0],
+        'Edges_X_Index': [edges_x_index],
+        'Edges_Y_Index': [edges_y_index],
+        'Empty_Index': [empty_index],
+        'LogOfAreas': [log_areas],
+        # Add all other features exactly as they appear in X_raw
+    }
+    
+    # Ensure we include all columns that were in the training data
+    for col in X_raw.columns:
+        if col not in input_data:
+            input_data[col] = [X_raw[col].mean()]  # Fill with mean if not in input
+    
+    input_df = pd.DataFrame(input_data)
+    input_combined = pd.concat([input_df, X_raw], axis=0)
+
+# Data preparation
+X = input_combined[1:]
+input_row = input_combined[:1]
+
+# Model training (using first fault type as example)
+clf = RandomForestClassifier()
+clf.fit(X, df['Other_Faults'])
+
+# Prediction
+prediction = clf.predict(input_row)
+prediction_proba = clf.predict_proba(input_row)
+
+# Display results
+st.subheader('Earthquake Risk Assessment')
+st.write('Probability of fault detection:')
+
+df_prediction_proba = pd.DataFrame(prediction_proba, columns=['No Fault', 'Fault Detected'])
+st.dataframe(df_prediction_proba.style.highlight_max(axis=1))
+
+if prediction[0] == 1:
+    st.error('🚨 High earthquake risk detected!')
 else:
-    st.error("Cannot proceed - no fault columns found in dataset")
+    st.success('✅ No significant risk detected')
