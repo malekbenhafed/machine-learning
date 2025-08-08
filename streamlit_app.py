@@ -23,6 +23,8 @@ with st.expander('Data'):
     
     st.write('**X (Features)**')
     X_raw = df.drop(existing_fault_columns, axis=1)
+with st.expander('Data visualization'):
+    st.scatter_chart(data=df, x='X_Minimum', y='Y_Minimum', color='Pastry')
     st.dataframe(X_raw)
 
     st.write('**y (Target - Fault Types)**')
