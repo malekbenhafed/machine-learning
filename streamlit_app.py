@@ -1,65 +1,82 @@
 import streamlit as st
+import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 
-st.title('🌍 Earthquake Risk Detector')
-st.write("This app predicts steel plate fault types to help assess potential earthquake vulnerabilities.")
+st.title('🌋 Earthquake Risk Detector')
+st.info('This app predicts steel plate faults to assess earthquake risks!')
+
+# Load data
+df = pd.read_csv('https://raw.githubusercontent.com/malekbenhafed/final-project/master/Steel_Plates_Faults.csv')
 
 with st.expander('Data'):
     st.write('**Raw data**')
-    df = pd.read_csv('https://raw.githubusercontent.com/malekbenhafed/final-project/master/Steel_Plates_Faults.csv')
-    
-    # First display the raw data
     st.dataframe(df)
     
-    # Show all column names to debug
-    st.write("**Column names in dataset:**")
-    st.write(list(df.columns))
-    
-    # Define the fault columns we expect
-    expected_fault_columns = ['Pastry', 'Z_Scratch', 'K_Scratch', 'Stains', 'Dirtiness', 'Bumps', 'Other_Faults']
-    
-    # Find which fault columns actually exist in the data
-    existing_fault_columns = [col for col in expected_fault_columns if col in df.columns]
-    
     st.write('**X (Features)**')
-    X_raw = df.drop(existing_fault_columns, axis=1)
-with st.expander('Data visualization'):
-    st.scatter_chart(data=df, x='X_Minimum', y='Y_Minimum', color='Pastry')
+    fault_columns = ['Pastry', 'Z_Scratch', 'K_Scratch', 'Stains', 'Dirtiness', 'Bumps', 'Other_Faults']
+    X_raw = df.drop(fault_columns, axis=1)
     st.dataframe(X_raw)
-
-    st.write('**y (Target - Fault Types)**')
-    y_raw = df[existing_fault_columns]
+    
+    st.write('**y (Fault Types)**')
+    y_raw = df[fault_columns]
     st.dataframe(y_raw)
-  # Earthquake Detection Input Features
+
+with st.expander('Data visualization'):
+    st.scatter_chart(data=df, x='X_Minimum', y='Y_Minimum', color='Other_Faults')
+
+# Input features
 with st.sidebar:
-    st.header('🌋 Earthquake Risk Parameters')
+    st.header('Steel Plate Parameters')
     
-    # Plate characteristics
-    plate_type = st.selectbox('Steel Plate Type', ['A300', 'A400'])
-    plate_thickness = st.slider('Plate Thickness (mm)', 
-                              min_value=float(df['Steel_Plate_Thickness'].min()),
-                              max_value=float(df['Steel_Plate_Thickness'].max()),
-                              value=float(df['Steel_Plate_Thickness'].median()))
+    steel_type = st.selectbox('Steel Type', ['A300', 'A400'])
+    thickness = st.slider('Plate Thickness', 
+                        float(df['Steel_Plate_Thickness'].min()),
+                        float(df['Steel_Plate_Thickness'].max()),
+                        float(df['Steel_Plate_Thickness'].mean()))
     
-    # Structural features
-    edge_index = st.slider('Edge Stress Index', 
-                         min_value=float(df['Edges_Index'].min()),
-                         max_value=float(df['Edges_Index'].max()),
-                         value=float(df['Edges_Index'].mean()))
+    luminosity = st.slider('Luminosity', 
+                         float(df['Sum_of_Luminosity'].min()),
+                         float(df['Sum_of_Luminosity'].max()),
+                         float(df['Sum_of_Luminosity'].mean()))
     
-    # Seismic activity indicators
-    luminosity = st.slider('Microfracture Luminosity', 
-                         min_value=float(df['Sum_of_Luminosity'].min()),
-                         max_value=float(df['Sum_of_Luminosity'].max()),
-                         value=float(df['Sum_of_Luminosity'].median()))
+    edge_index = st.slider('Edge Index',
+                         float(df['Edges_Index'].min()),
+                         float(df['Edges_Index'].max()),
+                         float(df['Edges_Index'].mean()))
     
-    # Location data
-    x_location = st.slider('X Coordinate', 
-                         min_value=float(df['X_Minimum'].min()),
-                         max_value=float(df['X_Minimum'].max()),
-                         value=float(df['X_Minimum'].mean()))
-    
-    y_location = st.slider('Y Coordinate',
-                         min_value=float(df['Y_Minimum'].min()),
-                         max_value=float(df['Y_Minimum'].max()),
-                         value=float(df['Y_Minimum'].mean()))
+    # Create input DataFrame
+    input_data = {
+        'TypeOfSteel_A300': [1 if steel_type == 'A300' else 0],
+        'TypeOfSteel_A400': [1 if steel_type == 'A400' else 0],
+        'Steel_Plate_Thickness': [thickness],
+        'Sum_of_Luminosity': [luminosity],
+        'Edges_Index': [edge_index]
+    }
+    input_df = pd.DataFrame(input_data)
+    input_combined = pd.concat([input_df, X_raw], axis=0)
+
+# Data preparation
+X = input_combined[1:]
+input_row = input_combined[:1]
+
+# Model training (using first fault type as example)
+clf = RandomForestClassifier()
+clf.fit(X, df['Other_Faults'])  # Using 'Other_Faults' as target
+
+# Prediction
+prediction = clf.predict(input_row)
+prediction_proba = clf.predict_proba(input_row)
+
+# Display results
+st.subheader('Earthquake Risk Assessment')
+st.write('Probability of fault detection:')
+
+df_prediction_proba = pd.DataFrame(prediction_proba, columns=['No Fault', 'Fault Detected'])
+st.dataframe(df_prediction_proba.style.highlight_max(axis=1), 
+             use_container_width=True)
+
+if prediction[0] == 1:
+    st.error('🚨 High earthquake risk detected!')
+else:
+    st.success('✅ No significant risk detected')
