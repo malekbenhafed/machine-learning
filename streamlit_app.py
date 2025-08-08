@@ -30,3 +30,16 @@ with st.expander('Data visualization'):
     st.write('**y (Target - Fault Types)**')
     y_raw = df[existing_fault_columns]
     st.dataframe(y_raw)
+    # Input features
+with st.sidebar:
+    st.header('Steel Plate Features')
+    steel_type = st.selectbox('Type of Steel', ('A300', 'A400'))
+    thickness = st.slider('Plate Thickness', float(df['Steel_Plate_Thickness'].min()), 
+                         float(df['Steel_Plate_Thickness'].max()), 
+                         float(df['Steel_Plate_Thickness'].median()))
+    luminosity = st.slider('Sum of Luminosity', float(df['Sum_of_Luminosity'].min()),
+                          float(df['Sum_of_Luminosity'].max()),
+                          float(df['Sum_of_Luminosity'].median()))
+    x_position = st.slider('X Position', float(df['X_Minimum'].min()),
+                          float(df['X_Minimum'].max()),
+                          float(df['X_Minimum'].median()))
