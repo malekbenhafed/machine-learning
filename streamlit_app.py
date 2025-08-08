@@ -9,9 +9,12 @@ with st.expander('Data'):
   df = pd.read_csv('https://raw.githubusercontent.com/malekbenhafed/final-project/master/Steel_Plates_Faults.csv')
   st.dataframe(df)
   st.write('**X**')
+  df = pd.read_csv('Steel_Plates_Faults.csv')
+
+  st.write('**X (Features)**')
   X_raw = df.drop(['Pastry', 'Z_Scratch', 'K_Scratch', 'Stains', 'Dirtiness', 'Bumps', 'Other_Faults'], axis=1)
   st.dataframe(X_raw)
 
- st.write('**y**')
- y_raw = df[['Pastry', 'Z_Scratch', 'K_Scratch', 'Stains', 'Dirtiness', 'Bumps', 'Other_Faults']]
- st.dataframe(y_raw)
+  st.write('**y (Target - Fault Types)**')
+  y_raw = df[['Pastry', 'Z_Scratch', 'K_Scratch', 'Stains', 'Dirtiness', 'Bumps', 'Other_Faults']]
+  st.dataframe(y_raw)
