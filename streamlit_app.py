@@ -30,16 +30,36 @@ with st.expander('Data visualization'):
     st.write('**y (Target - Fault Types)**')
     y_raw = df[existing_fault_columns]
     st.dataframe(y_raw)
-    # Input features
+  # Earthquake Detection Input Features
 with st.sidebar:
-    st.header('Steel Plate Features')
-    steel_type = st.selectbox('Type of Steel', ('A300', 'A400'))
-    thickness = st.slider('Plate Thickness', float(df['Steel_Plate_Thickness'].min()), 
-                         float(df['Steel_Plate_Thickness'].max()), 
-                         float(df['Steel_Plate_Thickness'].median()))
-    luminosity = st.slider('Sum of Luminosity', float(df['Sum_of_Luminosity'].min()),
-                          float(df['Sum_of_Luminosity'].max()),
-                          float(df['Sum_of_Luminosity'].median()))
-    x_position = st.slider('X Position', float(df['X_Minimum'].min()),
-                          float(df['X_Minimum'].max()),
-                          float(df['X_Minimum'].median()))
+    st.header('🌋 Earthquake Risk Parameters')
+    
+    # Plate characteristics
+    plate_type = st.selectbox('Steel Plate Type', ['A300', 'A400'])
+    plate_thickness = st.slider('Plate Thickness (mm)', 
+                              min_value=float(df['Steel_Plate_Thickness'].min()),
+                              max_value=float(df['Steel_Plate_Thickness'].max()),
+                              value=float(df['Steel_Plate_Thickness'].median()))
+    
+    # Structural features
+    edge_index = st.slider('Edge Stress Index', 
+                         min_value=float(df['Edges_Index'].min()),
+                         max_value=float(df['Edges_Index'].max()),
+                         value=float(df['Edges_Index'].mean()))
+    
+    # Seismic activity indicators
+    luminosity = st.slider('Microfracture Luminosity', 
+                         min_value=float(df['Sum_of_Luminosity'].min()),
+                         max_value=float(df['Sum_of_Luminosity'].max()),
+                         value=float(df['Sum_of_Luminosity'].median()))
+    
+    # Location data
+    x_location = st.slider('X Coordinate', 
+                         min_value=float(df['X_Minimum'].min()),
+                         max_value=float(df['X_Minimum'].max()),
+                         value=float(df['X_Minimum'].mean()))
+    
+    y_location = st.slider('Y Coordinate',
+                         min_value=float(df['Y_Minimum'].min()),
+                         max_value=float(df['Y_Minimum'].max()),
+                         value=float(df['Y_Minimum'].mean()))
